@@ -13,6 +13,7 @@
 #include <QMessageBox>
 #include <QFileDialog>
 #include <QRegExp>
+#include <QDesktopServices>
 
 #include <boost/filesystem.hpp>
 #include <boost/date_time.hpp>
@@ -155,6 +156,27 @@ void JoinImageDialog::handleError(int ec)
 	done(0);
 }
 
+void JoinImageDialog::handleFinish(const QString& outputPath)
+{
+	QMessageBox msgBox(this);
+
+	msgBox.setText(u8"操作已完成");
+
+	QPushButton* open = msgBox.addButton(u8"打开文件夹", QMessageBox::AcceptRole);
+	QPushButton* ok = msgBox.addButton(u8"确定", QMessageBox::AcceptRole);
+
+	msgBox.setDefaultButton(ok);
+
+	msgBox.exec();
+
+	if (msgBox.clickedButton() == open)
+	{
+		QDesktopServices::openUrl(QUrl::fromLocalFile(outputPath));
+	}
+
+	done(1);
+}
+
 void JoinImageDialog::proc()
 {
 	fs::path outputPath = settings_.outputDir.toStdWString();
@@ -173,9 +195,9 @@ void JoinImageDialog::proc()
 			lastBranch = branch;
 		}
 
-		if (!boost::iequals(branch.generic_wstring(), lastBranch.generic_wstring()))
+		if (!boost::iequals(branch.wstring(), lastBranch.wstring()))
 		{
-			int ec = joinImages(QString::fromStdWString(outputPath.generic_wstring()), lastIndex, i);
+			int ec = joinImages(QString::fromStdWString(outputPath.wstring()), lastIndex, i);
 
 			if (ec != ec_success)
 			{
@@ -191,7 +213,7 @@ void JoinImageDialog::proc()
 
 		if (i == list_.count() - 1)
 		{
-			int ec = joinImages(QString::fromStdWString(outputPath.generic_wstring()), lastIndex, list_.count());
+			int ec = joinImages(QString::fromStdWString(outputPath.wstring()), lastIndex, list_.count());
 
 			if (ec != ec_success)
 			{
@@ -203,7 +225,7 @@ void JoinImageDialog::proc()
 		}
 	}
 
-	QMetaObject::invokeMethod(this, "done", Qt::QueuedConnection, Q_ARG(int, 1));
+	QMetaObject::invokeMethod(this, "handleFinish", Qt::QueuedConnection, Q_ARG(QString, QString::fromStdWString(outputPath.wstring())));
 }
 
 int JoinImageDialog::joinImages(const QString& outputPath, int first, int last)
@@ -320,7 +342,7 @@ QString JoinImageDialog::generateFilename(const QString& base, int number)
 
 	p = p / buf;
 
-	return QString::fromStdWString(p.generic_wstring());
+	return QString::fromStdWString(p.wstring());
 }
 
 QString JoinImageDialog::makeOutputPath(const QString& basePath, const QString& relativePath)
@@ -342,7 +364,7 @@ QString JoinImageDialog::makeOutputPath(const QString& basePath, const QString& 
 		fs::create_directories(p);
 	}
 
-	return QString::fromStdWString(p.generic_wstring());
+	return QString::fromStdWString(p.wstring());
 }
 
 QList<QString> JoinImageDialog::removeSameBasePaths(const QList<QString>& list)

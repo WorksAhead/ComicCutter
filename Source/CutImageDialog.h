@@ -27,6 +27,7 @@ private Q_SLOTS:
 	void start();
 	void updateProgress(int);
 	void handleError(int);
+	void handleFinish(const QString&);
 
 private:
 	void proc();

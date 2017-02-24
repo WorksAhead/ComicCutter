@@ -19,7 +19,7 @@ ComicCutter::ComicCutter(QWidget *parent) : QMainWindow(parent)
 {
 	ui_.setupUi(this);
 
-	setWindowTitle("ComicCutter 1.0b");
+	setWindowTitle("ComicCutter 1.0c");
 
 	QObject::connect(ui_.actionExit, &QAction::triggered, this, &QMainWindow::close);
 
