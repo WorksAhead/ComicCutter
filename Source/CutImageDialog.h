@@ -20,11 +20,13 @@ public:
 	~CutImageDialog();
 
 public:
+	virtual void keyPressEvent(QKeyEvent*);
 	virtual void closeEvent(QCloseEvent*);
 
 private Q_SLOTS:
 	void browse();
 	void start();
+	QList<QImage> manualCutImage(const QImage&);
 	void updateProgress(int);
 	void handleError(int);
 	void handleFinish(const QString&);
@@ -33,6 +35,7 @@ private:
 	void proc();
 
 	int cutImages(const QString&, int, int);
+	int userCutAndSave(const QImage&, const QString& outputPath, int& number);
 	int feedCuttingBoard(QImage&, int, QList<QImage>&, int&, int&);
 	void scrollCuttingBoard(QImage&, int);
 	int loadImages(QList<QImage>&, int, int);
@@ -49,6 +52,8 @@ private:
 	QList<QString> relativePaths_;
 
 	CutImageSettings settings_;
+
+	QRect cachedManualCutImageDialogGeometry_;
 
 	QFuture<void> f_;
 	QAtomicInt cancel_;

@@ -1,4 +1,5 @@
 #include "CutImageDialog.h"
+#include "ManualCutImageDialog.h"
 #include "ErrorCode.h"
 
 #include <QRegExpValidator>
@@ -14,6 +15,7 @@
 #include <QFileDialog>
 #include <QRegExp>
 #include <QDesktopServices>
+#include <QKeyEvent>
 
 #include <boost/filesystem.hpp>
 #include <boost/date_time.hpp>
@@ -64,6 +66,14 @@ CutImageDialog::CutImageDialog(QList<QString>&& list, QWidget* parent)
 
 CutImageDialog::~CutImageDialog()
 {
+}
+
+void CutImageDialog::keyPressEvent(QKeyEvent* e)
+{
+	if (e->key() == Qt::Key_Escape)
+	{
+		close();
+	}
 }
 
 void CutImageDialog::closeEvent(QCloseEvent* e)
@@ -142,6 +152,21 @@ void CutImageDialog::start()
 	ui_.progressBar->setVisible(true);
 
 	f_ = QtConcurrent::run(this, &CutImageDialog::proc);
+}
+
+QList<QImage> CutImageDialog::manualCutImage(const QImage& image)
+{
+	ManualCutImageDialog d(image, settings_.cutHeight, this);
+
+	if (cachedManualCutImageDialogGeometry_.isValid()) {
+		d.setGeometry(cachedManualCutImageDialogGeometry_);
+	}
+
+	d.exec();
+
+	cachedManualCutImageDialogGeometry_ = d.geometry();
+
+	return d.result();
 }
 
 void CutImageDialog::updateProgress(int v)
@@ -246,7 +271,7 @@ int CutImageDialog::cutImages(const QString& outputPath, int first, int last)
 		return ec;
 	}
 
-	const int boardHeight = 30000;
+	const int boardHeight = 32767;
 
 	QImage cuttingBoard(settings_.width, boardHeight, QImage::Format_RGB32);
 
@@ -309,7 +334,7 @@ int CutImageDialog::cutImages(const QString& outputPath, int first, int last)
 				y += hh;
 				h -= hh;
 			}
-			else if (settings_.extraHeightMode == 0)
+			else if (settings_.extraHeightMode == 0 || settings_.extraHeightMode == 2)
 			{
 				int y1 = y + settings_.cutHeight;
 				int y2 = y + h;
@@ -322,8 +347,18 @@ int CutImageDialog::cutImages(const QString& outputPath, int first, int last)
 
 					QImage image = cuttingBoard.copy(0, y, settings_.width, hh);
 
-					if (!image.save(generateFilename(fullOutputPath, number++), "JPG", settings_.jpegQuality)) {
-						return ec_save_error;
+					if (settings_.extraHeightMode == 2)
+					{
+						if ((ec = userCutAndSave(image, fullOutputPath, number)) != ec_success)
+						{
+							return ec;
+						}
+					}
+					else
+					{
+						if (!image.save(generateFilename(fullOutputPath, number++), "JPG", settings_.jpegQuality)) {
+							return ec_save_error;
+						}
 					}
 
 					y += hh;
@@ -335,8 +370,18 @@ int CutImageDialog::cutImages(const QString& outputPath, int first, int last)
 
 					QImage image = cuttingBoard.copy(0, y, settings_.width, hh);
 
-					if (!image.save(generateFilename(fullOutputPath, number++), "JPG", settings_.jpegQuality)) {
-						return ec_save_error;
+					if (settings_.extraHeightMode == 2)
+					{
+						if ((ec = userCutAndSave(image, fullOutputPath, number)) != ec_success)
+						{
+							return ec;
+						}
+					}
+					else
+					{
+						if (!image.save(generateFilename(fullOutputPath, number++), "JPG", settings_.jpegQuality)) {
+							return ec_save_error;
+						}
 					}
 
 					y += hh;
@@ -369,6 +414,22 @@ int CutImageDialog::cutImages(const QString& outputPath, int first, int last)
 				remain = h;
 				break;
 			}
+		}
+	}
+
+	return ec_success;
+}
+
+int CutImageDialog::userCutAndSave(const QImage& image, const QString& outputPath, int& number)
+{
+	QList<QImage> result;
+
+	QMetaObject::invokeMethod(this, "manualCutImage", Qt::BlockingQueuedConnection, Q_RETURN_ARG(QList<QImage>, result), Q_ARG(QImage, image));
+
+	for (QImage& image : result)
+	{
+		if (!image.save(generateFilename(outputPath, number++), "JPG", settings_.jpegQuality)) {
+			return ec_save_error;
 		}
 	}
 

@@ -20,6 +20,7 @@ public:
 	~JoinImageDialog();
 
 public:
+	virtual void keyPressEvent(QKeyEvent*);
 	virtual void closeEvent(QCloseEvent*);
 
 private Q_SLOTS:

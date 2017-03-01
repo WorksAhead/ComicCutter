@@ -14,6 +14,7 @@
 #include <QFileDialog>
 #include <QRegExp>
 #include <QDesktopServices>
+#include <QKeyEvent>
 
 #include <boost/filesystem.hpp>
 #include <boost/date_time.hpp>
@@ -62,6 +63,14 @@ JoinImageDialog::JoinImageDialog(QList<QString>&& list, QWidget* parent)
 
 JoinImageDialog::~JoinImageDialog()
 {
+}
+
+void JoinImageDialog::keyPressEvent(QKeyEvent* e)
+{
+	if (e->key() == Qt::Key_Escape)
+	{
+		close();
+	}
 }
 
 void JoinImageDialog::closeEvent(QCloseEvent* e)
