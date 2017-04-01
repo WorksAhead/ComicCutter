@@ -56,7 +56,7 @@ CutImageDialog::CutImageDialog(QList<QString>&& list, QWidget* parent)
 		ui_.outDirEdit->setText(configObject["outdir"].toString());
 		ui_.widthBox->lineEdit()->setText(QString::number(configObject["width"].toInt()));
 		ui_.cutHeightBox->lineEdit()->setText(QString::number(configObject["cutHeight"].toInt()));
-		ui_.extraHeightModeBox->setCurrentIndex(configObject["extraHeightMode"].toInt());
+		ui_.modeBox->setCurrentIndex(configObject["mode"].toInt());
 		ui_.toleranceBox->setValue(configObject["tolerance"].toInt());
 		ui_.jpegQualityBox->setValue(configObject["jpegQuality"].toInt());
 	}
@@ -121,7 +121,7 @@ void CutImageDialog::start()
 		return;
 	}
 
-	settings_.extraHeightMode = ui_.extraHeightModeBox->currentIndex();
+	settings_.mode = ui_.modeBox->currentIndex();
 
 	settings_.tolerance = ui_.toleranceBox->value();
 
@@ -136,7 +136,7 @@ void CutImageDialog::start()
 		configObject["outdir"] = ui_.outDirEdit->text();
 		configObject["width"] = settings_.width;
 		configObject["cutHeight"] = settings_.cutHeight;
-		configObject["extraHeightMode"] = settings_.extraHeightMode;
+		configObject["mode"] = settings_.mode;
 		configObject["tolerance"] = settings_.tolerance;
 		configObject["jpegQuality"] = settings_.jpegQuality;
 
@@ -154,7 +154,7 @@ void CutImageDialog::start()
 	f_ = QtConcurrent::run(this, &CutImageDialog::proc);
 }
 
-QList<QImage> CutImageDialog::manualCutImage(const QImage& image)
+QList<QRect> CutImageDialog::manualCutImage(const QImage& image)
 {
 	ManualCutImageDialog d(image, settings_.cutHeight, this);
 
@@ -166,7 +166,7 @@ QList<QImage> CutImageDialog::manualCutImage(const QImage& image)
 
 	cachedManualCutImageDialogGeometry_ = d.geometry();
 
-	return d.result();
+	return d.resultRects();
 }
 
 void CutImageDialog::updateProgress(int v)
@@ -283,136 +283,189 @@ int CutImageDialog::cutImages(const QString& outputPath, int first, int last)
 	QString fullOutputPath = makeOutputPath(outputPath, relativePaths_[first]);
 	int number = 1;
 
-	for (;;)
+	if (settings_.mode == 3)
 	{
-		if (cancel_.load()) {
-			return ec_cancel;
-		}
-
-		int h = feedCuttingBoard(cuttingBoard, remain, images, imageIndex, imageY);
-
-		if (remain > 0) {
-			h += remain;
-			remain = 0;
-		}
-
-		if (h == 0) {
-			break;
-		}
-
-		if (h <= settings_.cutHeight)
-		{
-			QImage image = cuttingBoard.copy(0, 0, settings_.width, h);
-
-			if (!image.save(generateFilename(fullOutputPath, number++), "JPG", settings_.jpegQuality)) {
-				return ec_save_error;
-			}
-
-			break;
-		}
-
-		int y = 0;
-
 		for (;;)
 		{
 			if (cancel_.load()) {
 				return ec_cancel;
 			}
 
-			int cy = findCuttableLine(cuttingBoard, y, y + settings_.cutHeight);
+			int h = feedCuttingBoard(cuttingBoard, remain, images, imageIndex, imageY);
 
-			if (cy - y >= 20)
+			if (remain > 0) {
+				h += remain;
+				remain = 0;
+			}
+
+			if (h == 0) {
+				break;
+			}
+
+			QList<QRect> result;
+
+			if (h < boardHeight)
 			{
-				int hh = cy - y + 1;
+				QImage image = cuttingBoard.copy(0, 0, settings_.width, h);
+				QMetaObject::invokeMethod(this, "manualCutImage", Qt::BlockingQueuedConnection, Q_RETURN_ARG(QList<QRect>, result), Q_ARG(QImage, image));
+			}
+			else
+			{
+				QMetaObject::invokeMethod(this, "manualCutImage", Qt::BlockingQueuedConnection, Q_RETURN_ARG(QList<QRect>, result), Q_ARG(QImage, cuttingBoard));
+			}
 
-				QImage image = cuttingBoard.copy(0, y, settings_.width, hh);
+			if (imageIndex < images.count())
+			{
+				remain = result.last().height();
+				result.pop_back();
+			}
+
+			for (QRect& rect : result)
+			{
+				if (!cuttingBoard.copy(rect).save(generateFilename(outputPath, number++), "JPG", settings_.jpegQuality)) {
+					return ec_save_error;
+				}
+			}
+
+			if (imageIndex < images.count())
+			{
+				scrollCuttingBoard(cuttingBoard, h - remain);
+			}
+		}
+	}
+	else
+	{
+		for (;;)
+		{
+			if (cancel_.load()) {
+				return ec_cancel;
+			}
+
+			int h = feedCuttingBoard(cuttingBoard, remain, images, imageIndex, imageY);
+
+			if (remain > 0) {
+				h += remain;
+				remain = 0;
+			}
+
+			if (h == 0) {
+				break;
+			}
+
+			if (h <= settings_.cutHeight)
+			{
+				QImage image = cuttingBoard.copy(0, 0, settings_.width, h);
 
 				if (!image.save(generateFilename(fullOutputPath, number++), "JPG", settings_.jpegQuality)) {
 					return ec_save_error;
 				}
 
-				y += hh;
-				h -= hh;
+				break;
 			}
-			else if (settings_.extraHeightMode == 0 || settings_.extraHeightMode == 2)
+
+			int y = 0;
+
+			for (;;)
 			{
-				int y1 = y + settings_.cutHeight;
-				int y2 = y + h;
+				if (cancel_.load()) {
+					return ec_cancel;
+				}
 
-				int cy = findCuttableLine(cuttingBoard, y1, y2, 0);
+				int cy = findCuttableLine(cuttingBoard, y, y + settings_.cutHeight);
 
-				if (cy > y1 && cy < y2)
+				if (cy - y >= 20)
 				{
 					int hh = cy - y + 1;
 
 					QImage image = cuttingBoard.copy(0, y, settings_.width, hh);
 
-					if (settings_.extraHeightMode == 2)
-					{
-						if ((ec = userCutAndSave(image, fullOutputPath, number)) != ec_success)
-						{
-							return ec;
-						}
-					}
-					else
-					{
-						if (!image.save(generateFilename(fullOutputPath, number++), "JPG", settings_.jpegQuality)) {
-							return ec_save_error;
-						}
+					if (!image.save(generateFilename(fullOutputPath, number++), "JPG", settings_.jpegQuality)) {
+						return ec_save_error;
 					}
 
 					y += hh;
 					h -= hh;
 				}
-				else if (y == 0)
+				else if (settings_.mode == 0 || settings_.mode == 2)
 				{
-					int hh = h;
+					int y1 = y + settings_.cutHeight;
+					int y2 = y + h;
+
+					int cy = findCuttableLine(cuttingBoard, y1, y2, 0);
+
+					if (cy > y1 && cy < y2)
+					{
+						int hh = cy - y + 1;
+
+						QImage image = cuttingBoard.copy(0, y, settings_.width, hh);
+
+						if (settings_.mode == 2)
+						{
+							if ((ec = userCutAndSave(image, fullOutputPath, number)) != ec_success)
+							{
+								return ec;
+							}
+						}
+						else
+						{
+							if (!image.save(generateFilename(fullOutputPath, number++), "JPG", settings_.jpegQuality)) {
+								return ec_save_error;
+							}
+						}
+
+						y += hh;
+						h -= hh;
+					}
+					else if (y == 0)
+					{
+						int hh = h;
+
+						QImage image = cuttingBoard.copy(0, y, settings_.width, hh);
+
+						if (settings_.mode == 2)
+						{
+							if ((ec = userCutAndSave(image, fullOutputPath, number)) != ec_success)
+							{
+								return ec;
+							}
+						}
+						else
+						{
+							if (!image.save(generateFilename(fullOutputPath, number++), "JPG", settings_.jpegQuality)) {
+								return ec_save_error;
+							}
+						}
+
+						y += hh;
+						h -= hh;
+					}
+					else
+					{
+						scrollCuttingBoard(cuttingBoard, y);
+						remain = h;
+						break;
+					}
+				}
+				else /*if (settings_.mode == 1)*/
+				{
+					int hh = settings_.cutHeight;
 
 					QImage image = cuttingBoard.copy(0, y, settings_.width, hh);
 
-					if (settings_.extraHeightMode == 2)
-					{
-						if ((ec = userCutAndSave(image, fullOutputPath, number)) != ec_success)
-						{
-							return ec;
-						}
-					}
-					else
-					{
-						if (!image.save(generateFilename(fullOutputPath, number++), "JPG", settings_.jpegQuality)) {
-							return ec_save_error;
-						}
+					if (!image.save(generateFilename(fullOutputPath, number++), "JPG", settings_.jpegQuality)) {
+						return ec_save_error;
 					}
 
 					y += hh;
 					h -= hh;
 				}
-				else
+
+				if (h <= settings_.cutHeight)
 				{
 					scrollCuttingBoard(cuttingBoard, y);
 					remain = h;
 					break;
 				}
-			}
-			else
-			{
-				int hh = settings_.cutHeight;
-
-				QImage image = cuttingBoard.copy(0, y, settings_.width, hh);
-
-				if (!image.save(generateFilename(fullOutputPath, number++), "JPG", settings_.jpegQuality)) {
-					return ec_save_error;
-				}
-
-				y += hh;
-				h -= hh;
-			}
-
-			if (h <= settings_.cutHeight)
-			{
-				scrollCuttingBoard(cuttingBoard, y);
-				remain = h;
-				break;
 			}
 		}
 	}
@@ -422,13 +475,13 @@ int CutImageDialog::cutImages(const QString& outputPath, int first, int last)
 
 int CutImageDialog::userCutAndSave(const QImage& image, const QString& outputPath, int& number)
 {
-	QList<QImage> result;
+	QList<QRect> result;
 
-	QMetaObject::invokeMethod(this, "manualCutImage", Qt::BlockingQueuedConnection, Q_RETURN_ARG(QList<QImage>, result), Q_ARG(QImage, image));
+	QMetaObject::invokeMethod(this, "manualCutImage", Qt::BlockingQueuedConnection, Q_RETURN_ARG(QList<QRect>, result), Q_ARG(QImage, image));
 
-	for (QImage& image : result)
+	for (QRect& rect : result)
 	{
-		if (!image.save(generateFilename(outputPath, number++), "JPG", settings_.jpegQuality)) {
+		if (!image.copy(rect).save(generateFilename(outputPath, number++), "JPG", settings_.jpegQuality)) {
 			return ec_save_error;
 		}
 	}

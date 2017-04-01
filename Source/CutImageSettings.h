@@ -9,7 +9,7 @@ struct CutImageSettings {
 
 	int width;
 	int cutHeight;
-	int extraHeightMode;
+	int mode;
 	int tolerance;
 	int jpegQuality;
 

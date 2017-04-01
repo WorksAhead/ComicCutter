@@ -26,7 +26,7 @@ public:
 private Q_SLOTS:
 	void browse();
 	void start();
-	QList<QImage> manualCutImage(const QImage&);
+	QList<QRect> manualCutImage(const QImage&);
 	void updateProgress(int);
 	void handleError(int);
 	void handleFinish(const QString&);

@@ -18,8 +18,6 @@ public:
 
 	void setCutHeight(int);
 
-	QList<QImage> resultImages();
-
 	QList<QRect> resultRects();
 
 Q_SIGNALS:

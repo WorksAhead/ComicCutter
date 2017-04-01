@@ -6,19 +6,19 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
+    <width>450</width>
     <height>280</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
-    <width>400</width>
+    <width>450</width>
     <height>280</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
-    <width>400</width>
+    <width>450</width>
     <height>280</height>
    </size>
   </property>
@@ -28,7 +28,7 @@
      <property name="title">
       <string>设置</string>
      </property>
-     <layout class="QGridLayout" name="gridLayout_2" columnstretch="0,0,0,1" rowminimumheight="24,24,24,24,24,0" columnminimumwidth="110,80,0,0">
+     <layout class="QGridLayout" name="gridLayout_2" columnstretch="0,1,0,0" rowminimumheight="24,24,24,24,24,0" columnminimumwidth="110,80,0,0">
       <property name="leftMargin">
        <number>18</number>
       </property>
@@ -102,7 +102,7 @@
       <item row="3" column="0">
        <widget class="QLabel" name="label_5">
         <property name="text">
-         <string>超高处理模式</string>
+         <string>处理模式</string>
         </property>
        </widget>
       </item>
@@ -140,23 +140,28 @@
        </widget>
       </item>
       <item row="3" column="1">
-       <widget class="QComboBox" name="extraHeightModeBox">
+       <widget class="QComboBox" name="modeBox">
         <property name="enabled">
          <bool>true</bool>
         </property>
         <item>
          <property name="text">
-          <string>保留</string>
+          <string>自动 - 保留超过高度的图</string>
          </property>
         </item>
         <item>
          <property name="text">
-          <string>强制切分</string>
+          <string>自动 - 强制切分超过高度的图</string>
          </property>
         </item>
         <item>
          <property name="text">
-          <string>手动</string>
+          <string>半自动 - 手动处理超过高度的图</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>全手动</string>
          </property>
         </item>
        </widget>
@@ -185,7 +190,7 @@
         </property>
         <property name="sizeHint" stdset="0">
          <size>
-          <width>40</width>
+          <width>20</width>
           <height>20</height>
          </size>
         </property>
@@ -279,7 +284,7 @@
   <tabstop>browseButton</tabstop>
   <tabstop>widthBox</tabstop>
   <tabstop>cutHeightBox</tabstop>
-  <tabstop>extraHeightModeBox</tabstop>
+  <tabstop>modeBox</tabstop>
   <tabstop>toleranceBox</tabstop>
   <tabstop>jpegQualityBox</tabstop>
   <tabstop>startButton</tabstop>

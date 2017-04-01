@@ -27,9 +27,9 @@ ManualCutImageDialog::~ManualCutImageDialog()
 
 }
 
-QList<QImage> ManualCutImageDialog::result()
+QList<QRect> ManualCutImageDialog::resultRects()
 {
-	return ui_.widget->resultImages();
+	return ui_.widget->resultRects();
 }
 
 void ManualCutImageDialog::ensureVisible(int y)

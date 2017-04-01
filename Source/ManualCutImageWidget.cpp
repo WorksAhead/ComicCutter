@@ -53,20 +53,6 @@ void ManualCutImageWidget::undoAll()
 	}
 }
 
-QList<QImage> ManualCutImageWidget::resultImages()
-{
-	QList<QRect> rects = resultRects();
-
-	QList<QImage> result;
-
-	for (const QRect& rect : rects)
-	{
-		result.append(image_.copy(rect));
-	}
-
-	return result;
-}
-
 QList<QRect> ManualCutImageWidget::resultRects()
 {
 	QList<int> lineList = lineList_;
@@ -211,11 +197,6 @@ void ManualCutImageWidget::paintEvent(QPaintEvent* e)
 
 	QList<QRect> rects = resultRects();
 
-	QFont font("Georgia", 24, QFont::Bold);
-	QFontMetrics fm(font);
-
-	painter.setFont(font);
-
 	int n = 1;
 
 	for (QRect rect : rects)
@@ -227,18 +208,57 @@ void ManualCutImageWidget::paintEvent(QPaintEvent* e)
 
 		QString text = QString("%1").arg(n++);
 
+		QFont font("Georgia", 24, QFont::Bold);
+
+		QFontMetrics fm(font);
+
+		painter.setFont(font);
+
 		QRect textRect = fm.boundingRect(rect.adjusted(5, 5, -5, -5), Qt::AlignLeft|Qt::TextWordWrap, text);
 
-		painter.fillRect(textRect.adjusted(-2, -2, 2, 2), QColor(0, 0, 0, 160));
+		painter.fillRect(textRect.adjusted(-2, -2, 2, 2), QColor(255, 0, 0));
 
 		painter.setPen(QColor(250, 250, 250));
+
 		painter.drawText(textRect, text);
 	}
 
 	if (line_ != -1)
 	{
-		painter.setPen(QColor(255, 0, 255));
-		painter.drawLine(0, line_, width() - 1, line_);
+		int h = screenToImage(line_);
+
+		for (QRect rect : rects)
+		{
+			if (h >= rect.top() && h <= rect.bottom())
+			{
+				h = h - rect.top();
+
+				painter.setPen(QColor(255, 0, 255));
+
+				painter.drawLine(0, line_, width() - 1, line_);
+
+				QString text = QString("%1").arg(h);
+
+				QFont font("Segoe UI", 10);
+
+				QFontMetrics fm(font);
+
+				painter.setFont(font);
+
+				QRect textRect = fm.boundingRect(text);
+
+				textRect.moveLeft((width() - textRect.width() + 4) / 2);
+				textRect.moveBottom(line_ - 2);
+
+				painter.fillRect(textRect.adjusted(-2, -2, 2, 2), QColor(255, 0, 255));
+
+				painter.setPen(QColor(250, 250, 250));
+
+				painter.drawText(textRect, text);
+
+				break;
+			}
+		}
 	}
 }
 

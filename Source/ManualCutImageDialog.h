@@ -14,7 +14,7 @@ public:
 	ManualCutImageDialog(const QImage& image, int cutHeight, QWidget* parent = 0);
 	~ManualCutImageDialog();
 
-	QList<QImage> result();
+	QList<QRect> resultRects();
 
 private Q_SLOTS:
 	void ensureVisible(int);
