@@ -15,6 +15,7 @@
 #include <QRegExp>
 #include <QDesktopServices>
 #include <QKeyEvent>
+#include <QStandardPaths>
 
 #include <boost/filesystem.hpp>
 #include <boost/date_time.hpp>
@@ -44,7 +45,7 @@ JoinImageDialog::JoinImageDialog(QList<QString>&& list, QWidget* parent)
 	QObject::connect(ui_.startButton, &QPushButton::clicked, this, &JoinImageDialog::start);
 	QObject::connect(ui_.browseButton, &QPushButton::clicked, this, &JoinImageDialog::browse);
 
-	QFile loadFile("JoinImageConfig");
+	QFile loadFile(configFilePath());
 
 	if (loadFile.open(QIODevice::ReadOnly))
 	{
@@ -120,7 +121,7 @@ void JoinImageDialog::start()
 
 	settings_.jpegQuality = ui_.jpegQualityBox->value();
 
-	QFile saveFile("JoinImageConfig");
+	QFile saveFile(configFilePath());
 
 	if (saveFile.open(QIODevice::WriteOnly))
 	{
@@ -441,5 +442,14 @@ quit:
 	}
 
 	return result;
+}
+
+QString JoinImageDialog::configFilePath()
+{
+	fs::path path = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation).toStdWString();
+
+	path /= "JoinImageConfig";
+
+	return QString::fromStdWString(path.wstring());
 }
 

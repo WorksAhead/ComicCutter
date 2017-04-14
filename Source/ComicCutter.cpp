@@ -12,6 +12,8 @@
 #include <QList>
 #include <QUrl>
 #include <QMessageBox>
+#include <QStandardPaths>
+#include <QDir>
 
 #include <QDebug>
 
@@ -19,11 +21,18 @@ ComicCutter::ComicCutter(QWidget *parent) : QMainWindow(parent)
 {
 	ui_.setupUi(this);
 
-	setWindowTitle("ComicCutter 1.2");
+	setWindowTitle("ComicCutter 1.3");
 
 	QObject::connect(ui_.actionExit, &QAction::triggered, this, &QMainWindow::close);
 
 	setAcceptDrops(true);
+
+	QDir dataDir(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation));
+
+	if (!dataDir.exists())
+	{
+		dataDir.mkpath(".");
+	}
 }
 
 void ComicCutter::onDropFiles(int result)

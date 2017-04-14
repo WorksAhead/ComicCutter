@@ -39,6 +39,7 @@ private:
 	QString generateFilename(const QString&, int);
 	QString makeOutputPath(const QString&, const QString&);
 	QList<QString> removeSameBasePaths(const QList<QString>&);
+	QString configFilePath();
 
 private:
 	Ui::JoinImageDialog ui_;

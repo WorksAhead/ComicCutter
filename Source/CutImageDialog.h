@@ -26,6 +26,7 @@ public:
 private Q_SLOTS:
 	void browse();
 	void start();
+	bool useLastRecord(int first, int last);
 	QList<QRect> manualCutImage(const QImage&);
 	void updateProgress(int);
 	void handleError(int);
@@ -44,6 +45,11 @@ private:
 	QString generateFilename(const QString&, int);
 	QString makeOutputPath(const QString&, const QString&);
 	QList<QString> removeSameBasePaths(const QList<QString>&);
+	QString generateRecordHash(int, int, int);
+	void saveRecord(const QString&, const QList<int>&);
+	bool loadRecord(const QString&, QList<int>&);
+	QString configFilePath();
+	QString recordFilePath(const QString&);
 
 private:
 	Ui::CutImageDialog ui_;

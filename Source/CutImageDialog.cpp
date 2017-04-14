@@ -16,6 +16,10 @@
 #include <QRegExp>
 #include <QDesktopServices>
 #include <QKeyEvent>
+#include <QCryptographicHash>
+#include <QDataStream>
+#include <QtEndian>
+#include <QStandardPaths>
 
 #include <boost/filesystem.hpp>
 #include <boost/date_time.hpp>
@@ -45,7 +49,7 @@ CutImageDialog::CutImageDialog(QList<QString>&& list, QWidget* parent)
 	QObject::connect(ui_.startButton, &QPushButton::clicked, this, &CutImageDialog::start);
 	QObject::connect(ui_.browseButton, &QPushButton::clicked, this, &CutImageDialog::browse);
 
-	QFile loadFile("CutImageConfig");
+	QFile loadFile(configFilePath());
 
 	if (loadFile.open(QIODevice::ReadOnly))
 	{
@@ -127,7 +131,7 @@ void CutImageDialog::start()
 
 	settings_.jpegQuality = ui_.jpegQualityBox->value();
 
-	QFile saveFile("CutImageConfig");
+	QFile saveFile(configFilePath());
 
 	if (saveFile.open(QIODevice::WriteOnly))
 	{
@@ -152,6 +156,45 @@ void CutImageDialog::start()
 	ui_.progressBar->setVisible(true);
 
 	f_ = QtConcurrent::run(this, &CutImageDialog::proc);
+}
+
+bool CutImageDialog::useLastRecord(int first, int last)
+{
+	QMessageBox msgBox(this);
+
+	QString msg;
+
+	for (int i = first; i < last; ++i)
+	{
+		if (i - first + 1 <= 5)
+		{
+			msg.append(list_[i]);
+			msg.append("\n");
+		}
+		else
+		{
+			msg.append("...\n");
+			break;
+		}
+	}
+
+	msg.append(u8"检测到该组图片上一次切分的记录");
+
+	msgBox.setText(msg);
+
+	QPushButton* yes = msgBox.addButton(u8"按照记录执行切分", QMessageBox::AcceptRole);
+	QPushButton* no = msgBox.addButton(u8"重新进行切分", QMessageBox::AcceptRole);
+
+	msgBox.setDefaultButton(yes);
+
+	msgBox.exec();
+
+	if (msgBox.clickedButton() == yes)
+	{
+		return true;
+	}
+
+	return false;
 }
 
 QList<QRect> CutImageDialog::manualCutImage(const QImage& image)
@@ -285,6 +328,18 @@ int CutImageDialog::cutImages(const QString& outputPath, int first, int last)
 
 	if (settings_.mode == 3)
 	{
+		QList<int> record;
+		QList<int> newRecord;
+
+		QString recordFileName = QString("CutImageRecord_%1").arg(generateRecordHash(first, last, settings_.width));
+
+		bool recordEnabled = loadRecord(recordFileName, record);
+
+		if (recordEnabled)
+		{
+			QMetaObject::invokeMethod(this, "useLastRecord", Qt::BlockingQueuedConnection, Q_RETURN_ARG(bool, recordEnabled), Q_ARG(int, first), Q_ARG(int, last));
+		}
+
 		for (;;)
 		{
 			if (cancel_.load()) {
@@ -304,33 +359,62 @@ int CutImageDialog::cutImages(const QString& outputPath, int first, int last)
 
 			QList<QRect> result;
 
-			if (h < boardHeight)
+			if (recordEnabled)
 			{
-				QImage image = cuttingBoard.copy(0, 0, settings_.width, h);
-				QMetaObject::invokeMethod(this, "manualCutImage", Qt::BlockingQueuedConnection, Q_RETURN_ARG(QList<QRect>, result), Q_ARG(QImage, image));
+				int yy = 0;
+
+				while (!record.isEmpty())
+				{
+					int hh = record.front();
+
+					if (yy + hh > h)
+					{
+						remain = h - yy;
+						break;
+					}
+
+					result.append(QRect(0, yy, settings_.width, hh));
+					record.pop_front();
+					yy += hh;
+				}
 			}
 			else
 			{
-				QMetaObject::invokeMethod(this, "manualCutImage", Qt::BlockingQueuedConnection, Q_RETURN_ARG(QList<QRect>, result), Q_ARG(QImage, cuttingBoard));
-			}
+				if (h < boardHeight)
+				{
+					QImage image = cuttingBoard.copy(0, 0, settings_.width, h);
+					QMetaObject::invokeMethod(this, "manualCutImage", Qt::BlockingQueuedConnection, Q_RETURN_ARG(QList<QRect>, result), Q_ARG(QImage, image));
+				}
+				else
+				{
+					QMetaObject::invokeMethod(this, "manualCutImage", Qt::BlockingQueuedConnection, Q_RETURN_ARG(QList<QRect>, result), Q_ARG(QImage, cuttingBoard));
+				}
 
-			if (imageIndex < images.count())
-			{
-				remain = result.last().height();
-				result.pop_back();
+				if (imageIndex < images.count())
+				{
+					remain = result.last().height();
+					result.pop_back();
+				}
 			}
 
 			for (QRect& rect : result)
 			{
-				if (!cuttingBoard.copy(rect).save(generateFilename(outputPath, number++), "JPG", settings_.jpegQuality)) {
+				if (!cuttingBoard.copy(rect).save(generateFilename(fullOutputPath, number++), "JPG", settings_.jpegQuality)) {
 					return ec_save_error;
 				}
+
+				newRecord.append(rect.height());
 			}
 
 			if (imageIndex < images.count())
 			{
 				scrollCuttingBoard(cuttingBoard, h - remain);
 			}
+		}
+
+		if (!recordEnabled && newRecord.count() > 0)
+		{
+			saveRecord(recordFileName, newRecord);
 		}
 	}
 	else
@@ -711,5 +795,105 @@ quit:
 	}
 
 	return result;
+}
+
+QString CutImageDialog::generateRecordHash(int first, int last, int width)
+{
+	QCryptographicHash hash(QCryptographicHash::Sha1);
+
+	for (int i = first; i < last; ++i)
+	{
+		hash.addData(list_[i].toUtf8());
+	}
+
+	width = qToBigEndian(width);
+
+	hash.addData((char*)&width, sizeof(width));
+
+	return hash.result().toHex();
+}
+
+void CutImageDialog::saveRecord(const QString& fileName, const QList<int>& record)
+{
+	QFile recordFile(recordFilePath(fileName));
+
+	if (recordFile.open(QIODevice::WriteOnly))
+	{
+		QByteArray data;
+
+		QDataStream stream(&data, QIODevice::WriteOnly);
+
+		stream << record.count();
+
+		for (int i = 0; i < record.count(); ++i) {
+			stream << record[i];
+		}
+
+		QCryptographicHash hash(QCryptographicHash::Sha1);
+
+		hash.addData(data);
+
+		recordFile.write(hash.result());
+		recordFile.write(data);
+		recordFile.close();
+	}
+}
+
+bool CutImageDialog::loadRecord(const QString& fileName, QList<int>& record)
+{
+	QFile recordFile(recordFilePath(fileName));
+
+	if (!recordFile.exists() || !recordFile.open(QIODevice::ReadOnly)) {
+		return false;
+	}
+
+	QByteArray data = recordFile.read(1024 * 8);
+
+	if (data.count() <= 20) {
+		return false;
+	}
+
+	QCryptographicHash hash(QCryptographicHash::Sha1);
+
+	hash.addData(data.data() + 20, data.count() - 20);
+
+	if (memcmp(data.data(), hash.result().data(), 20) != 0) {
+		return false;
+	}
+
+	QDataStream stream(&data, QIODevice::ReadOnly);
+
+	stream.skipRawData(20);
+
+	int count;
+
+	stream >> count;
+
+	for (int i = 0; i < count; ++i)
+	{
+		int height;
+		stream >> height;
+		record.append(height);
+	}
+
+	return true;
+}
+
+QString CutImageDialog::configFilePath()
+{
+	fs::path path = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation).toStdWString();
+
+	path /= "CutImageConfig";
+
+	return QString::fromStdWString(path.wstring());
+}
+
+QString CutImageDialog::recordFilePath(const QString& file)
+{
+	fs::path path = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation).toStdWString();
+
+	path /= file.toStdWString();
+
+	return QString::fromStdWString(path.wstring());
 }
 
