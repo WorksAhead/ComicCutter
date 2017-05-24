@@ -6,7 +6,7 @@
 
 inline bool isImageFile(const QFileInfo& info)
 {
-	const char* extensions[] = {"jpg", "jpeg", "png"};
+	const char* extensions[] = {"jpg", "jpeg", "png", "psd", "psb"};
 
 	if (info.isFile())
 	{

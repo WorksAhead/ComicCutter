@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "ComicCutter"
-#define MyAppVersion "1.3"
+#define MyAppVersion "1.3a"
 #define MyAppPublisher "Cyou, Inc."
 #define MyAppExeName "ComicCutter.exe"
 
@@ -31,14 +31,54 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\ComicCutter.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\imageformats\*"; DestDir: "{app}\imageformats"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\platforms\*"; DestDir: "{app}\platforms"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\ComicCutter.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\concrt140.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\msvcp140.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\Qt5Core.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\Qt5Gui.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\Qt5Widgets.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\vccorlib140.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\vcruntime140.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\concrt140.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\msvcp140.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\ucrtbase.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\api-ms-win-core-console-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\api-ms-win-core-datetime-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\api-ms-win-core-debug-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\api-ms-win-core-errorhandling-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\api-ms-win-core-file-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\api-ms-win-core-file-l1-2-0.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\api-ms-win-core-file-l2-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\api-ms-win-core-handle-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\api-ms-win-core-heap-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\api-ms-win-core-interlocked-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\api-ms-win-core-libraryloader-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\api-ms-win-core-localization-l1-2-0.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\api-ms-win-core-memory-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\api-ms-win-core-namedpipe-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\api-ms-win-core-processenvironment-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\api-ms-win-core-processthreads-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\api-ms-win-core-processthreads-l1-1-1.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\api-ms-win-core-profile-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\api-ms-win-core-rtlsupport-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\api-ms-win-core-string-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\api-ms-win-core-synch-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\api-ms-win-core-synch-l1-2-0.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\api-ms-win-core-sysinfo-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\api-ms-win-core-timezone-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\api-ms-win-core-util-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\api-ms-win-crt-conio-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\api-ms-win-crt-convert-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\api-ms-win-crt-environment-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\api-ms-win-crt-filesystem-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\api-ms-win-crt-heap-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\api-ms-win-crt-locale-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\api-ms-win-crt-math-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\api-ms-win-crt-multibyte-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\api-ms-win-crt-private-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\api-ms-win-crt-process-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\api-ms-win-crt-runtime-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\api-ms-win-crt-stdio-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\api-ms-win-crt-string-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\api-ms-win-crt-time-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Work\MyWorks\ComicCutter\Bin\Win32\api-ms-win-crt-utility-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
